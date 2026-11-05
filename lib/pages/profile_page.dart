@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/profile_data.dart';
 import '../services/pref_service.dart';
-import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -25,41 +24,26 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _profile = widget.prefs.profile; // baca data tersimpan
+    // Membaca profil awal dari SharedPreferences
+    _profile = widget.prefs.profile; 
   }
 
-  Future<void> _edit() async {
-    final result = await Navigator.push<ProfileData>(
-      context,
-      MaterialPageRoute(builder: (_) => EditProfilePage(initial: _profile)),
-    );
-    if (result == null) return; // pengguna menekan back
-
-    await widget.prefs.saveProfile(result);
+  // --- Langkah 1 Lab 5 ---
+  Future<void> _reset() async {
+    await widget.prefs.clearProfile();
     if (!mounted) return;
-    setState(() => _profile = result);
+    setState(() => _profile = widget.prefs.profile);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profil tersimpan')),
+      const SnackBar(content: Text('Profil dikembalikan ke bawaan')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final initial =
-        _profile.name.isNotEmpty ? _profile.name[0].toUpperCase() : '?';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kartu Profil Digital'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: 'Edit profil',
-            onPressed: _edit,
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Kartu Profil Digital')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -71,7 +55,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: colors.primaryContainer,
-                    child: Text(initial, style: const TextStyle(fontSize: 32)),
+                    child: Text(
+                      _profile.name[0].toUpperCase(),
+                      style: const TextStyle(fontSize: 32),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(_profile.name,
@@ -91,8 +78,16 @@ class _ProfilePageState extends State<ProfilePage> {
             value: widget.isDark,
             onChanged: widget.onThemeChanged,
           ),
-          // Lab 11 akan menambahkan menu "Proyek Saya" di sini.
           const SizedBox(height: 24),
+          
+          // --- Langkah 2 Lab 5 ---
+          OutlinedButton.icon(
+            onPressed: _reset,
+            icon: const Icon(Icons.restore),
+            label: const Text('Reset Profil'),
+          ),
+          const SizedBox(height: 24),
+          
           Center(
             child: Text(
               'Kartu ini sudah dibuka ${widget.prefs.openCount} kali',
